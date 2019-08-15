@@ -25,6 +25,8 @@ const {
  * and we have to tell GraphQL what *type* of thing each property is....
  */
 
+const rootUrl = 'http://localhost:3000'
+
 const CompanyType = new GraphQLObjectType({
     name: 'Company',
     fields: {
@@ -66,15 +68,22 @@ const RootQuery = new GraphQLObjectType({
             args: {
                 id: { type: GraphQLString }
             },
-            resolve (parentValue, args) {
-                // return _.find(users, { id: args.id })
-                /**
-                 * when `axios` returns a promise, the response is nested
-                 * under `data`, so we need to make our response point to it
-                 */
-                return axios.get(`http://localhost:3000/users/${args.id}`)
+            /**
+             * when `axios` returns a promise, the response is nested
+             * under `data`, so we need to make our response point to it
+             */
+            resolve: (parentValue, args) =>
+                axios.get(`${rootUrl}/users/${args.id}`)
                     .then(resp => resp.data)
-            }
+        },
+        company: {
+            type: CompanyType,
+            args: {
+                id: { type: GraphQLString }
+            },
+            resolve: (parentValue, args) =>
+                axios.get(`${rootUrl}/companies/${args.id}`)
+                    .then(resp => resp.data)
         }
     }
 });
