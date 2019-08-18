@@ -6,10 +6,11 @@
 const axios = require('axios')
 const graphql = require('graphql')
 const {
-    GraphQLObjectType,
-    GraphQLString,
     GraphQLInt,
-    GraphQLSchema
+    GraphQLList,
+    GraphQLObjectType,
+    GraphQLSchema,
+    GraphQLString
 } = graphql;
 // const _ = require('lodash');
 
@@ -29,16 +30,26 @@ const rootUrl = 'http://localhost:3000'
 
 const CompanyType = new GraphQLObjectType({
     name: 'Company',
-    fields: {
+    fields: () => ({
+        description: { type: GraphQLString },
         id: { type: GraphQLString },
         name: { type: GraphQLString },
-        description: { type: GraphQLString }
-    }
+        /**
+         * `users` enables us to go from one company
+         * to all of its associated users
+         */
+        users: {
+            type: new GraphQLList(UserType),
+            resolve: (parentValue, args) =>
+                axios.get(`${rootUrl}/companies/${parentValue.id}/users`)
+                    .then(resp => resp.data)
+        }
+    })
 })
 
 const UserType = new GraphQLObjectType({
     name: 'User',
-    fields: {
+    fields: () => ({
         id: { type: GraphQLString },
         firstName: { type: GraphQLString },
         age: { type: GraphQLInt },
@@ -51,8 +62,8 @@ const UserType = new GraphQLObjectType({
                     .then(resp => resp.data)
             }
         }
-    }
-});
+    })
+})
 
 /**
  * if you're looking for a user, supply an id (`args[id]`)
@@ -86,8 +97,8 @@ const RootQuery = new GraphQLObjectType({
                     .then(resp => resp.data)
         }
     }
-});
+})
 
 module.exports = new GraphQLSchema({
     query: RootQuery
-});
+})
